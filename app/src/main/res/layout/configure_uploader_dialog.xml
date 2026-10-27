@@ -57,6 +57,13 @@
             android:text="@string/t0st_name" />
 
         <CheckBox
+            android:id="@+id/corvus_upload_dialog_checkbox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/corvus_name" />
+
+        <CheckBox
             android:id="@+id/reupload_if_upload_fails_upload_dialog_checkbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

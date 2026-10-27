@@ -19,6 +19,7 @@ final class MeasurementsTable implements ITable {
     static final String COLUMN_UPLOADED_TO_OCID_AT = "uploaded_to_ocid_at";
     static final String COLUMN_UPLOADED_TO_MLS_AT = "uploaded_to_mls_at";
     static final String COLUMN_UPLOADED_TO_T0ST_AT = "uploaded_to_t0st_at";
+    static final String COLUMN_UPLOADED_TO_CORVUS_AT = "uploaded_to_corvus_at";
 
     private static final String QUERY_DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
 
@@ -34,7 +35,8 @@ final class MeasurementsTable implements ITable {
             COLUMN_MEASURED_AT + " INTEGER NOT NULL, " +
             COLUMN_UPLOADED_TO_OCID_AT + " INTEGER DEFAULT NULL, " +
             COLUMN_UPLOADED_TO_MLS_AT + " INTEGER DEFAULT NULL, " +
-            COLUMN_UPLOADED_TO_T0ST_AT + " INTEGER DEFAULT NULL)";
+            COLUMN_UPLOADED_TO_T0ST_AT + " INTEGER DEFAULT NULL, " +
+            COLUMN_UPLOADED_TO_CORVUS_AT + " INTEGER DEFAULT NULL)";
 
     private static final String QUERY_CREATE_INDEX_MEASURED_AT = "CREATE INDEX 'IX_" + TABLE_NAME + "_" + COLUMN_MEASURED_AT +
             "' ON " + TABLE_NAME + " (" + COLUMN_MEASURED_AT + " DESC)";
@@ -48,6 +50,9 @@ final class MeasurementsTable implements ITable {
     private static final String QUERY_CREATE_INDEX_UPLOADED_TO_T0ST_AT = "CREATE INDEX 'IX_" + TABLE_NAME + "_" + COLUMN_UPLOADED_TO_T0ST_AT +
             "' ON " + TABLE_NAME + " (" + COLUMN_UPLOADED_TO_T0ST_AT + " ASC)";
 
+    private static final String QUERY_CREATE_INDEX_UPLOADED_TO_CORVUS_AT = "CREATE INDEX 'IX_" + TABLE_NAME + "_" + COLUMN_UPLOADED_TO_CORVUS_AT +
+            "' ON " + TABLE_NAME + " (" + COLUMN_UPLOADED_TO_CORVUS_AT + " ASC)";
+
     @Override
     public String[] getCreateQueries() {
         return new String[]{
@@ -57,6 +62,7 @@ final class MeasurementsTable implements ITable {
                 QUERY_CREATE_INDEX_UPLOADED_TO_OCID_AT,
                 QUERY_CREATE_INDEX_UPLOADED_TO_MLS_AT,
                 QUERY_CREATE_INDEX_UPLOADED_TO_T0ST_AT,
+                QUERY_CREATE_INDEX_UPLOADED_TO_CORVUS_AT,
         };
     }
 }

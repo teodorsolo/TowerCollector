@@ -533,4 +533,15 @@
     <string name="preferences_t0st_contributor_anonymous_title">Anonymous contribution</string>
     <string name="preferences_t0st_contributor_anonymous_on_summary">The anonymous contribution will be used.</string>
     <string name="preferences_t0st_contributor_anonymous_off_summary">The contributor name will be used.</string>
+    <string name="corvus_name" translatable="false">Corvus Instinct</string>
+    <string name="preferences_corvus_enabled_key" translatable="false">corvus_enabled</string>
+    <string name="preferences_corvus_enabled_off_summary">Measurements will not be uploaded to Corvus Instinct.</string>
+    <string name="preferences_corvus_enabled_on_summary">Measurements will be uploaded to Corvus Instinct.</string>
+    <string name="preferences_corvus_enabled_title">Enable Corvus Instinct upload</string>
+    <string name="preferences_about_corvus_project_key" translatable="false">about_corvus</string>
+    <string name="preferences_about_corvus_project_summary">Information about Corvus Instinct</string>
+    <string name="preferences_about_corvus_project_title">About Corvus Instinct</string>
+    <string name="info_about_corvus_project_title">About Corvus Instinct</string>
+    <string name="main_help_to_upload_corvus_locations_description">Number of measurements waiting for upload to Corvus Instinct.</string>
+    <string name="main_stats_to_upload_corvus_locations_label">Corvus Instinct:</string>
 </resources>

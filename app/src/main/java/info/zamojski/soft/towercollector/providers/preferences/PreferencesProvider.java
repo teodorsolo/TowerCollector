@@ -224,6 +224,15 @@ public class PreferencesProvider {
         return value;
     }
 
+    public boolean isCorvusUploadEnabled() {
+        boolean value = booleanPreferenceProvider.getPreference(R.string.preferences_corvus_enabled_key, R.bool.preferences_corvus_enabled_default_value);
+        return value;
+    }
+
+    public void setCorvusUploadEnabled(boolean value) {
+        booleanPreferenceProvider.setPreference(R.string.preferences_corvus_enabled_key, value);
+    }
+
     public String getT0stContributorName() {
         boolean isAnonymous = booleanPreferenceProvider.getPreference(R.string.preferences_t0st_contributor_anonymous_key, R.bool.preferences_t0st_contributor_anonymous_default_value);
         if (isAnonymous) {

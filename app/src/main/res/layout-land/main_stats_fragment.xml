@@ -325,6 +325,29 @@
                             tools:context=".MainActivity"
                             tools:text="123" />
                     </LinearLayout>
+
+                    <LinearLayout android:id="@+id/main_stats_to_upload_corvus_locations_tablerow" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="horizontal" android:clickable="true" android:focusable="true" android:onClick="displayHelpOnClick" android:padding="4dp">
+
+                        <TextView
+                            android:id="@+id/main_stats_to_upload_corvus_locations_label_textview"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_width="140dp"
+                            android:layout_height="wrap_content"
+                            android:padding="@dimen/padding_small"
+                            android:text="@string/main_stats_to_upload_corvus_locations_label"
+                            tools:context=".MainActivity" />
+
+                        <TextView
+                            android:id="@+id/main_stats_to_upload_corvus_locations_value_textview"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurface"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="@dimen/padding_small"
+                            tools:context=".MainActivity"
+                            tools:text="123" />
+                    </LinearLayout>
                 </TableRow>
 
             </TableLayout>

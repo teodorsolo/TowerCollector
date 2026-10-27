@@ -56,6 +56,10 @@ public class Measurement extends MeasurementBase implements Serializable {
      */
     private Long uploadedToT0stAt;
     /**
+     * Uploaded to Corvus Instinct Unix Timestamp with milliseconds.
+     */
+    private Long uploadedToCorvusAt;
+    /**
      * Associated cells.
      */
     private List<Cell> cells = new ArrayList<>();
@@ -119,6 +123,9 @@ public class Measurement extends MeasurementBase implements Serializable {
     public Long getUploadedToT0stAt() { return uploadedToT0stAt; }
     public void setUploadedToT0stAt(Long uploadedToT0stAt) { this.uploadedToT0stAt = uploadedToT0stAt; }
 
+    public Long getUploadedToCorvusAt() { return uploadedToCorvusAt; }
+    public void setUploadedToCorvusAt(Long uploadedToCorvusAt) { this.uploadedToCorvusAt = uploadedToCorvusAt; }
+
     public List<Cell> getCells() {
         return cells;
     }
@@ -166,6 +173,7 @@ public class Measurement extends MeasurementBase implements Serializable {
                 ", uploadedToOcidAt=" + uploadedToOcidAt +
                 ", uploadedToMlsAt=" + uploadedToMlsAt +
                 ", uploadedToT0stAt=" + uploadedToT0stAt +
+                ", uploadedToCorvusAt=" + uploadedToCorvusAt +
                 ", cells=[" + TextUtils.join(", ", cells) + "]" +
                 '}';
     }

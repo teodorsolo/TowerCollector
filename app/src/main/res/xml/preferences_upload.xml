@@ -79,6 +79,14 @@
             app:title="@string/preferences_t0st_contributor_name_title" />
 
     </PreferenceCategory>
+    <PreferenceCategory app:title="@string/corvus_name">
+        <SwitchPreferenceCompat
+            app:defaultValue="@bool/preferences_corvus_enabled_default_value"
+            app:key="@string/preferences_corvus_enabled_key"
+            app:summaryOff="@string/preferences_corvus_enabled_off_summary"
+            app:summaryOn="@string/preferences_corvus_enabled_on_summary"
+            app:title="@string/preferences_corvus_enabled_title" />
+    </PreferenceCategory>
     <PreferenceCategory app:title="@string/preferences_category_help_title">
         <PreferenceScreen
             app:key="@string/preferences_about_opencellid_api_key_key"
@@ -92,6 +100,10 @@
             app:key="@string/preferences_about_mls_project_key"
             app:summary="@string/preferences_about_mls_project_summary"
             app:title="@string/preferences_about_mls_project_title" />
+        <PreferenceScreen
+            app:key="@string/preferences_about_corvus_project_key"
+            app:summary="@string/preferences_about_corvus_project_summary"
+            app:title="@string/preferences_about_corvus_project_title" />
         <PreferenceScreen
             app:key="@string/preferences_about_t0st_project_key"
             app:summary="@string/preferences_about_t0st_project_summary"

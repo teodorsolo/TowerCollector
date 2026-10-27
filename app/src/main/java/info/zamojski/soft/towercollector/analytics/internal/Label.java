@@ -21,4 +21,5 @@ public class Label {
     public static final String UploadMls = "UploadMLS";
     public static final String UploadCustomMls = "UploadCustomMLS";
     public static final String UploadT0st = "UploadT0st";
+    public static final String UploadCorvus = "UploadCorvus";
 }

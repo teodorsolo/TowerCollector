@@ -63,6 +63,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
     public static final String INTENT_KEY_UPLOAD_TO_CUSTOM_MLS = "upload_to_custom_mls";
     public static final String INTENT_KEY_UPLOAD_TO_T0ST = "upload_to_t0st";
     public static final String INTENT_KEY_UPLOAD_TO_T0ST_CONTRIBUTOR = "upload_to_t0st_contributor";
+    public static final String INTENT_KEY_UPLOAD_TO_CORVUS = "upload_to_corvus";
     public static final String INTENT_KEY_UPLOAD_TRY_REUPLOAD = "try_reupload";
     public static final String INTENT_KEY_START_INTENT_SOURCE = "start_intent_source";
     public static final String PROGRESS = "PROGRESS";
@@ -81,18 +82,21 @@ public class UploaderWorker extends Worker implements IProgressListener {
     private final String mlsUploadUrl;
     private final String customMlsUploadUrl;
     private final String t0stUploadUrl;
+    private final String corvusUploadUrl;
     private String ocidApiKey;
     private boolean isOpenCellIdUploadEnabled;
     private boolean isUseSharedOpenCellIdApiKeyEnabled;
     private boolean isMlsUploadEnabled;
     private boolean isCustomMlsUploadEnabled;
     private boolean isT0stUploadEnabled;
+    private boolean isCorvusUploadEnabled;
     private String t0stContributorName;
     private boolean isReuploadIfUploadFailsEnabled;
 
     private UploadResult ocidUploadResult = UploadResult.NotStarted;
     private UploadResult mlsUploadResult = UploadResult.NotStarted;
     private UploadResult t0stUploadResult = UploadResult.NotStarted;
+    private UploadResult corvusUploadResult = UploadResult.NotStarted;
 
     private IntentSource startIntentSource;
 
@@ -105,6 +109,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
         ocidUploadUrl = getStringById(R.string.upload_url_opencellid_org);
         mlsUploadUrl = getStringById(R.string.upload_url_mls);
         t0stUploadUrl = getStringById(R.string.upload_url_t0st);
+        corvusUploadUrl = getStringById(R.string.upload_url_corvus);
         customMlsUploadUrl = MyApplication.getPreferencesProvider().getCustomMlsUploadUrl();
         t0stContributorName = MyApplication.getPreferencesProvider().getT0stContributorName();
         // set app code
@@ -142,6 +147,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
             isMlsUploadEnabled = getInputData().getBoolean(INTENT_KEY_UPLOAD_TO_MLS, MyApplication.getPreferencesProvider().isMlsUploadEnabled());
             isCustomMlsUploadEnabled = getInputData().getBoolean(INTENT_KEY_UPLOAD_TO_CUSTOM_MLS, MyApplication.getPreferencesProvider().isCustomMlsUploadEnabled());
             isT0stUploadEnabled = getInputData().getBoolean(INTENT_KEY_UPLOAD_TO_T0ST, MyApplication.getPreferencesProvider().isT0stUploadEnabled());
+            isCorvusUploadEnabled = getInputData().getBoolean(INTENT_KEY_UPLOAD_TO_CORVUS, MyApplication.getPreferencesProvider().isCorvusUploadEnabled());
             isReuploadIfUploadFailsEnabled = getInputData().getBoolean(INTENT_KEY_UPLOAD_TRY_REUPLOAD, MyApplication.getPreferencesProvider().isReuploadIfUploadFailsEnabled());
             startIntentSource = IntentSource.valueOf(getInputData().getString(INTENT_KEY_START_INTENT_SOURCE));
             // we hope API key will be valid
@@ -156,6 +162,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
                 ocidUploadResult = UploadResult.NoData;
                 mlsUploadResult = UploadResult.NoData;
                 t0stUploadResult = UploadResult.NoData;
+                corvusUploadResult = UploadResult.NoData;
                 String summary = getStringById(R.string.uploader_result_message, getStringById(getMessage(ocidUploadResult)), getStringById(getDescription(ocidUploadResult)), getStringById(getDescription((t0stUploadResult))));
                 return Result.failure(getMessageData(summary));
             }
@@ -202,10 +209,21 @@ public class UploaderWorker extends Worker implements IProgressListener {
                 }
             }
 
+            if (corvusUploadResult == UploadResult.PartiallySucceeded) {
+                // we can be sure that everything was ok (because we stop on error)
+                corvusUploadResult = UploadResult.Success;
+            } else if (corvusUploadResult != UploadResult.DeleteFailed && corvusUploadResult != UploadResult.NotStarted) {
+                // can be cancelled or failed after uploading few parts (but not all)
+                if (succeededParts[1] > 0 && corvusUploadResult != UploadResult.LimitExceeded) {
+                    corvusUploadResult = UploadResult.PartiallySucceeded;
+                }
+            }
+
             // send stats only when succeeded
             if (ocidUploadResult == UploadResult.Success || ocidUploadResult == UploadResult.PartiallySucceeded
                     || mlsUploadResult == UploadResult.Success || mlsUploadResult == UploadResult.PartiallySucceeded
-                    || t0stUploadResult == UploadResult.Success || t0stUploadResult == UploadResult.PartiallySucceeded) {
+                    || t0stUploadResult == UploadResult.Success || t0stUploadResult == UploadResult.PartiallySucceeded
+                    || corvusUploadResult == UploadResult.Success || corvusUploadResult == UploadResult.PartiallySucceeded) {
                 long endTime = System.currentTimeMillis();
                 long duration = (endTime - startTime);
                 String networkType = NetworkUtils.getNetworkType(MyApplication.getApplication());
@@ -220,6 +238,8 @@ public class UploaderWorker extends Worker implements IProgressListener {
                     MyApplication.getAnalytics().sendUploadFinished(startIntentSource, networkType, duration, stats, isCustomMlsUploadEnabled ? Label.UploadCustomMls : Label.UploadMls);
                 if (isT0stUploadEnabled)
                     MyApplication.getAnalytics().sendUploadFinished(startIntentSource, networkType, duration, stats, Label.UploadT0st);
+                if (isCorvusUploadEnabled)
+                    MyApplication.getAnalytics().sendUploadFinished(startIntentSource, networkType, duration, stats, Label.UploadCorvus);
             }
             String ocidMessage = getStringById(getMessage(ocidUploadResult));
             String ocidDescription = getStringById(getDescription(ocidUploadResult));
@@ -230,7 +250,10 @@ public class UploaderWorker extends Worker implements IProgressListener {
             String t0stMessage = getStringById(getMessage(t0stUploadResult));
             String t0stDescription = getStringById((getDescription(t0stUploadResult)));
             String t0stSummary = getStringById(R.string.uploader_result_message, t0stMessage, t0stDescription);
-            String message = getStringById(R.string.uploader_result_description, ocidSummary, mlsSummary, t0stSummary);
+            String corvusMessage = getStringById(getMessage(corvusUploadResult));
+            String corvusDescription = getStringById(getDescription(corvusUploadResult));
+            String corvusSummary = getStringById(R.string.uploader_result_message, corvusMessage, corvusDescription);
+            String message = getStringById(R.string.uploader_result_description, ocidSummary, mlsSummary, t0stSummary, corvusSummary);
             return Result.success(getMessageData(message));
         } catch (Exception ex) {
             Timber.e(ex, "doWork(): Uploader failed");
@@ -346,13 +369,16 @@ public class UploaderWorker extends Worker implements IProgressListener {
     private int[] upload(int partsCount) {
         int ocidSucceededParts = 0, mlsSucceededParts = 0;
         int t0stSucceededParts = 0;
+        int corvusSucceededParts = 0;
         boolean continueOcidUpload = isOpenCellIdUploadEnabled;
         boolean continueMlsUpload = isMlsUploadEnabled;
         boolean continueT0stUpload = isT0stUploadEnabled;
+        boolean continueCorvusUpload = isCorvusUploadEnabled;
         Statistics stats = MeasurementsDatabase.getInstance(MyApplication.getApplication()).getMeasurementsStatistics();
         int numberToUploadOcid = stats.getToUploadOcid();
         int numberToUploadMls = stats.getToUploadMls();
         int numberToUploadT0st = stats.getToUploadT0st();
+        int numberToUploadCorvus = stats.getToUploadCorvus();
         // for each part start new upload
         for (int i = 0; i < partsCount; i++) {
             // check if cancelled
@@ -360,6 +386,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
                 ocidUploadResult = UploadResult.Cancelled;
                 mlsUploadResult = UploadResult.Cancelled;
                 t0stUploadResult = UploadResult.Cancelled;
+                corvusUploadResult = UploadResult.Cancelled;
                 break;
             }
             // notify
@@ -368,7 +395,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
             // prepare data starting from oldest
             List<Measurement> measurements = MeasurementsDatabase.getInstance(MyApplication.getApplication()).getMeasurementsPartIncludingPartiallyUploaded(i * LOCATIONS_PER_PART, LOCATIONS_PER_PART);
 
-            Timber.d("upload(): Continue upload to OCID = %s, MLS = %s, @t0stbrot.net = %s", continueOcidUpload, continueMlsUpload, continueT0stUpload);
+            Timber.d("upload(): Continue upload to OCID = %s, MLS = %s, @t0stbrot.net = %s, Corvus = %s", continueOcidUpload, continueMlsUpload, continueT0stUpload, continueCorvusUpload);
 
             Map<UploadTarget, List<Measurement>> groupedMeasurements = groupByUploaded(measurements);
             if (continueOcidUpload) {
@@ -386,6 +413,11 @@ public class UploaderWorker extends Worker implements IProgressListener {
                 t0stUploadResult = uploadToT0st(t0stMeasurements);
                 numberToUploadT0st -= t0stMeasurements.size();
             }
+            if (continueCorvusUpload) {
+                List<Measurement> corvusMeasurements = groupedMeasurements.get(UploadTarget.Corvus);
+                corvusUploadResult = uploadToCorvus(corvusMeasurements);
+                numberToUploadCorvus -= corvusMeasurements.size();
+            }
 
             if (ocidUploadResult == UploadResult.PartiallySucceeded)
                 ocidSucceededParts++;
@@ -393,33 +425,38 @@ public class UploaderWorker extends Worker implements IProgressListener {
                 mlsSucceededParts++;
             if (t0stUploadResult == UploadResult.PartiallySucceeded)
                 t0stSucceededParts++;
+            if (corvusUploadResult == UploadResult.PartiallySucceeded)
+                corvusSucceededParts++;
 
             continueOcidUpload &= ocidUploadResult == UploadResult.PartiallySucceeded || numberToUploadOcid > 0;
             continueMlsUpload &= mlsUploadResult == UploadResult.PartiallySucceeded || numberToUploadMls > 0;
             continueT0stUpload &= t0stUploadResult == UploadResult.PartiallySucceeded || numberToUploadT0st > 0;
+            continueCorvusUpload &= corvusUploadResult == UploadResult.PartiallySucceeded || numberToUploadCorvus > 0;
 
             boolean ocidSuccessful = (ocidUploadResult == UploadResult.PartiallySucceeded);
             boolean mlsSuccessful = (mlsUploadResult == UploadResult.PartiallySucceeded);
             boolean t0stSuccesful = (t0stUploadResult == UploadResult.PartiallySucceeded);
+            boolean corvusSuccessful = (corvusUploadResult == UploadResult.PartiallySucceeded);
 
             if (isReuploadIfUploadFailsEnabled) {
                 // all enabled succeeded
-                if ((ocidSuccessful || !isOpenCellIdUploadEnabled) && (mlsSuccessful || !isMlsUploadEnabled) && (t0stSuccesful || !isT0stUploadEnabled)) {
+                if ((ocidSuccessful || !isOpenCellIdUploadEnabled) && (mlsSuccessful || !isMlsUploadEnabled) && (t0stSuccesful || !isT0stUploadEnabled) && (corvusSuccessful || !isCorvusUploadEnabled)) {
                     Timber.d("upload(): Deleting measurements because OCID enabled = %s and successful = %s, MLS enabled = %s and successful = %s, @t0stbrot.net enabled = %s and successful = %s", isOpenCellIdUploadEnabled, ocidSuccessful, isMlsUploadEnabled, mlsSuccessful, isT0stUploadEnabled, t0stSuccesful);
                     // delete sent measurements
                     int[] rowIds = getMeasurementIds(measurements);
-                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, System.currentTimeMillis(), System.currentTimeMillis(), System.currentTimeMillis());
+                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, System.currentTimeMillis(), System.currentTimeMillis(), System.currentTimeMillis(), System.currentTimeMillis());
                     if (numberOfDeleted == 0) {
                         ocidUploadResult = UploadResult.DeleteFailed;
                         mlsUploadResult = UploadResult.DeleteFailed;
                         t0stUploadResult = UploadResult.DeleteFailed;
+                        corvusUploadResult = UploadResult.DeleteFailed;
                         break;
                     }
                 } else if (ocidSuccessful && isMlsUploadEnabled) {
                     Timber.d("upload(): Marking measurements as uploaded to OCID");
                     // keep for mls
                     int[] rowIds = getMeasurementIds(groupedMeasurements.get(UploadTarget.Ocid));
-                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, System.currentTimeMillis(), null, null);
+                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, System.currentTimeMillis(), null, null, null);
                     if (numberOfDeleted == 0) {
                         ocidUploadResult = UploadResult.DeleteFailed;
                         break;
@@ -428,7 +465,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
                     Timber.d("upload(): Marking measurements as uploaded to MLS");
                     // keep for ocid
                     int[] rowIds = getMeasurementIds(groupedMeasurements.get(UploadTarget.Mls));
-                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, null, System.currentTimeMillis(), null);
+                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, null, System.currentTimeMillis(), null, null);
                     if (numberOfDeleted == 0) {
                         mlsUploadResult = UploadResult.DeleteFailed;
                         break;
@@ -437,38 +474,48 @@ public class UploaderWorker extends Worker implements IProgressListener {
                     Timber.d("upload(): Marking measurements as uploaded to @t0stbrot.net");
                     // keep for @t0stbrot.net
                     int[] rowIds = getMeasurementIds(groupedMeasurements.get(UploadTarget.T0st));
-                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, null, null, System.currentTimeMillis());
+                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, null, null, System.currentTimeMillis(), null);
                     if (numberOfDeleted == 0) {
                         t0stUploadResult = UploadResult.DeleteFailed;
+                        break;
+                    }
+                } else if (corvusSuccessful && isCorvusUploadEnabled) {
+                    Timber.d("upload(): Marking measurements as uploaded to Corvus Instinct");
+                    // keep for Corvus Instinct
+                    int[] rowIds = getMeasurementIds(groupedMeasurements.get(UploadTarget.Corvus));
+                    int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, null, null, null, System.currentTimeMillis());
+                    if (numberOfDeleted == 0) {
+                        corvusUploadResult = UploadResult.DeleteFailed;
                         break;
                     }
                 } else {
                     Timber.d("upload(): Skipping delete because all uploads failed");
                     // all uploads failed - measurements were not uploaded
                 }
-            } else if ((isOpenCellIdUploadEnabled && ocidSuccessful) || (isMlsUploadEnabled && mlsSuccessful) || (isT0stUploadEnabled && t0stSuccesful)) {
+            } else if ((isOpenCellIdUploadEnabled && ocidSuccessful) || (isMlsUploadEnabled && mlsSuccessful) || (isT0stUploadEnabled && t0stSuccesful) || (isCorvusUploadEnabled && corvusSuccessful)) {
                 Timber.d("upload(): Deleting measurements because OCID enabled = %s and successful = %s, MLS enabled = %s and successful = %s", isOpenCellIdUploadEnabled, ocidSuccessful, isMlsUploadEnabled, mlsSuccessful);
                 // delete sent measurements
                 int[] rowIds = getMeasurementIds(measurements);
-                int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, System.currentTimeMillis(), System.currentTimeMillis(), System.currentTimeMillis());
+                int numberOfDeleted = MeasurementsDatabase.getInstance(MyApplication.getApplication()).markAsUploaded(rowIds, System.currentTimeMillis(), System.currentTimeMillis(), System.currentTimeMillis(), System.currentTimeMillis());
                 if (numberOfDeleted == 0) {
                     ocidUploadResult = UploadResult.DeleteFailed;
                     mlsUploadResult = UploadResult.DeleteFailed;
                     t0stUploadResult = UploadResult.DeleteFailed;
+                    corvusUploadResult = UploadResult.DeleteFailed;
                     break;
                 }
             }
             // broadcast part uploaded (if error not encountered earlier)
             EventBus.getDefault().post(new PrintMainWindowEvent());
 
-            if (!continueOcidUpload && !continueMlsUpload && !continueT0stUpload)
+            if (!continueOcidUpload && !continueMlsUpload && !continueT0stUpload && !continueCorvusUpload)
                 break;
         }
 
         // clean anyway because it doesn't hurt
         MeasurementsDatabase.getInstance(MyApplication.getApplication()).clearOlderUploadedPartiallyAndUploadedFully();
 
-        return new int[]{ocidSucceededParts, mlsSucceededParts, t0stSucceededParts};
+        return new int[]{ocidSucceededParts, mlsSucceededParts, t0stSucceededParts, corvusSucceededParts};
     }
 
     private Map<UploadTarget, List<Measurement>> groupByUploaded(List<Measurement> measurements) {
@@ -476,6 +523,7 @@ public class UploaderWorker extends Worker implements IProgressListener {
         filtered.put(UploadTarget.Ocid, new ArrayList<Measurement>());
         filtered.put(UploadTarget.Mls, new ArrayList<Measurement>());
         filtered.put(UploadTarget.T0st, new ArrayList<Measurement>());
+        filtered.put(UploadTarget.Corvus, new ArrayList<Measurement>());
         if (measurements != null) {
             for (Measurement m : measurements) {
                 if (m.getUploadedToOcidAt() == null) {
@@ -486,6 +534,9 @@ public class UploaderWorker extends Worker implements IProgressListener {
                 }
                 if (m.getUploadedToT0stAt() == null) {
                     filtered.get(UploadTarget.T0st).add(m);
+                }
+                if (m.getUploadedToCorvusAt() == null) {
+                    filtered.get(UploadTarget.Corvus).add(m);
                 }
             }
         }
@@ -643,9 +694,54 @@ public class UploaderWorker extends Worker implements IProgressListener {
         }
     }
 
+    private UploadResult uploadToCorvus(List<Measurement> measurements) {
+        if (measurements.isEmpty())
+            return UploadResult.NoData;
+        StringBuilder memoryFile = new StringBuilder();
+        IJsonFormatter formatter = new JsonMozillaUploadFormatter();
+        // write measurements
+        try {
+            memoryFile.append(formatter.formatList(measurements));
+        } catch (Exception ex) {
+            // this should never happen for in-memory writes
+            Timber.e(ex, "uploadToCorvus(): Error while generating file");
+            MyApplication.handleSilentException(ex);
+            return UploadResult.Failure;
+        }
+        // get content
+        String jsonContent = memoryFile.toString();
+        // send request
+        try {
+            IUploadClient client = new MozillaUploadClient(corvusUploadUrl);
+            RequestResult response = client.uploadMeasurements(jsonContent);
+            Timber.d("uploadToCorvus(): Server response: %s", response);
+            // check whether it makes sense to continue
+            if (response == RequestResult.ConfigurationError) {
+                return UploadResult.InvalidData;
+            } else if (response == RequestResult.ServerError) {
+                return UploadResult.ServerError;
+            } else if (response == RequestResult.ConnectionError) {
+                return UploadResult.ConnectionError;
+            } else if (response == RequestResult.LimitExceeded) {
+                return UploadResult.LimitExceeded;
+            } else if (response == RequestResult.Failure) {
+                return UploadResult.Failure;
+            } else if (response == RequestResult.Success) {
+                Timber.d("uploadToCorvus(): Uploaded %s measurements", measurements.size());
+                return UploadResult.PartiallySucceeded;
+            } else {
+                throw new UnsupportedOperationException(String.format("Unsupported upload result %s", response));
+            }
+        } catch (SecurityException ex) {
+            Timber.e(ex, "uploadToCorvus(): Internet permission is denied");
+            return UploadResult.PermissionDenied;
+        }
+    }
+
     private enum UploadTarget {
         Ocid,
         Mls,
         T0st,
+        Corvus,
     }
 }

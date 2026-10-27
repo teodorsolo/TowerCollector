@@ -53,6 +53,7 @@ public class UploadPreferenceFragment extends DialogEnabledPreferenceFragment im
         setupAboutOpenCellIdDialog();
         setupAboutMlsDialog();
         setupAboutT0stDialog();
+        setupAboutCorvusDialog();
     }
 
     @Override
@@ -124,5 +125,9 @@ public class UploadPreferenceFragment extends DialogEnabledPreferenceFragment im
 
     private void setupAboutT0stDialog() {
         setupDialog(R.string.preferences_about_t0st_project_key, R.string.info_about_t0st_project_title, R.raw.info_about_t0st_project_content);
+    }
+
+    private void setupAboutCorvusDialog() {
+        setupDialog(R.string.preferences_about_corvus_project_key, R.string.info_about_corvus_project_title, R.raw.info_about_corvus_project_content);
     }
 }

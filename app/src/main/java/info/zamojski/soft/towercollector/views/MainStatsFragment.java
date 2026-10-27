@@ -39,6 +39,7 @@ public class MainStatsFragment extends MainFragmentBase {
     private TextView mainStatsToUploadOcidValueTextView;
     private TextView mainStatsToUploadMlsValueTextView;
     private TextView mainStatsToUploadT0stValueTextView;
+    private TextView mainStatsToUploadCorvusValueTextView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -70,6 +71,7 @@ public class MainStatsFragment extends MainFragmentBase {
         mainStatsToUploadOcidValueTextView = view.findViewById(R.id.main_stats_to_upload_ocid_locations_value_textview);
         mainStatsToUploadMlsValueTextView = view.findViewById(R.id.main_stats_to_upload_mls_locations_value_textview);
         mainStatsToUploadT0stValueTextView = view.findViewById(R.id.main_stats_to_upload_t0st_locations_value_textview);
+        mainStatsToUploadCorvusValueTextView = view.findViewById(R.id.main_stats_to_upload_corvus_locations_value_textview);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -103,5 +105,6 @@ public class MainStatsFragment extends MainFragmentBase {
         mainStatsToUploadOcidValueTextView.setText(String.format(locale, "%d", stats.getToUploadOcid()));
         mainStatsToUploadMlsValueTextView.setText(String.format(locale, "%d", stats.getToUploadMls()));
         mainStatsToUploadT0stValueTextView.setText(String.format(locale, "%d", stats.getToUploadT0st()));
+        mainStatsToUploadCorvusValueTextView.setText(String.format(locale, "%d", stats.getToUploadCorvus()));
     }
 }
